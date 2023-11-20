@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "Poisson1D.hpp"
+#include "Poisson1D.hpp" 
 
 // Main function.
 int

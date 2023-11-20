@@ -1,7 +1,7 @@
 #include "Poisson1D.hpp"
 
 void
-Poisson1D::setup()
+Poisson1D::setup() 
 {
   std::cout << "===============================================" << std::endl;
 
@@ -100,7 +100,7 @@ Poisson1D::assemble()
   std::cout << "  Assembling the linear system" << std::endl;
 
   // Number of local DoFs for each element.
-  const unsigned int dofs_per_cell = fe->dofs_per_cell;
+  const unsigned int dofs_per_cell = fe->dofs_per_cell; // you are in 1D so you have two dofs per cell (?)
 
   // Number of quadrature points for each element.
   const unsigned int n_q = quadrature->size();
@@ -118,28 +118,28 @@ Poisson1D::assemble()
     // - the position of quadrature points (update_quadrature_points);
     // - the product J_c(x_q)*w_q (update_JxW_values).
     update_values | update_gradients | update_quadrature_points |
-      update_JxW_values);
+      update_JxW_values); // see lab solution for more details
 
   // Local matrix and right-hand side vector. We will overwrite them for
   // each element within the loop.
-  FullMatrix<double> cell_matrix(dofs_per_cell, dofs_per_cell);
+  FullMatrix<double> cell_matrix(dofs_per_cell, dofs_per_cell); // using full matrix because the local matrix is small and full
   Vector<double>     cell_rhs(dofs_per_cell);
 
   // We will use this vector to store the global indices of the DoFs of the
   // current element within the loop.
-  std::vector<types::global_dof_index> dof_indices(dofs_per_cell);
+  std::vector<types::global_dof_index> dof_indices(dofs_per_cell); // this is global
 
   // Reset the global matrix and vector, just in case.
   system_matrix = 0.0;
   system_rhs    = 0.0;
 
-  for (const auto &cell : dof_handler.active_cell_iterators())
+  for (const auto &cell : dof_handler.active_cell_iterators()) // range based for loop
     {
       // Reinitialize the FEValues object on current element. This
       // precomputes all the quantities we requested when constructing
       // FEValues (see the update_* flags above) for all quadrature nodes of
       // the current cell.
-      fe_values.reinit(cell);
+      fe_values.reinit(cell); // for every cell initialize the FEValues object
 
       // We reset the cell matrix and vector (discarding any leftovers from
       // previous element).
@@ -151,7 +151,7 @@ Poisson1D::assemble()
           // Here we assemble the local contribution for current cell and
           // current quadrature point, filling the local matrix and vector.
 
-          // Here we iterate over *local* DoF indices.
+          // Here we iterate over *local* DoF indices. THIS IS LOCAL
           for (unsigned int i = 0; i < dofs_per_cell; ++i)
             {
               for (unsigned int j = 0; j < dofs_per_cell; ++j)
@@ -160,13 +160,13 @@ Poisson1D::assemble()
                   // basis function at the q-th quadrature node, already mapped
                   // on the physical element: we don't have to deal with the
                   // mapping, it's all hidden inside FEValues.
-                  cell_matrix(i, j) += diffusion_coefficient.value(
+                  cell_matrix(i, j) += diffusion_coefficient.value( // computing the ij-th entry of the local matrix; pay attention to use += and not =
                                          fe_values.quadrature_point(q)) // mu(x)
-                                       * fe_values.shape_grad(i, q)     // (I)
-                                       * fe_values.shape_grad(j, q)     // (II)
-                                       * fe_values.JxW(q);              // (III)
+                                       * fe_values.shape_grad(i, q)     // (I) i-th basis function gradient of the q-th quadrature point
+                                       * fe_values.shape_grad(j, q)     // (II) j-th basis function gradient of the q-th quadrature point
+                                       * fe_values.JxW(q);              // (III) product J_c(x_q)*w_q
                 }
-
+              // assemble the local rhs on the i indeces as the forcing term times the i-th basis function times the product J_c(x_q)*w_q
               cell_rhs(i) += forcing_term.value(fe_values.quadrature_point(q)) *
                              fe_values.shape_value(i, q) * fe_values.JxW(q);
             }
@@ -175,7 +175,7 @@ Poisson1D::assemble()
       // At this point the local matrix and vector are constructed: we need
       // to sum them into the global matrix and vector. To this end, we need
       // to retrieve the global indices of the DoFs of current cell.
-      cell->get_dof_indices(dof_indices);
+      cell->get_dof_indices(dof_indices); // retrieve the global indices of the DoFs of current cell
 
       // Then, we add the local matrix and vector into the corresponding
       // positions of the global matrix and vector.
@@ -183,22 +183,22 @@ Poisson1D::assemble()
       system_rhs.add(dof_indices, cell_rhs);
     }
 
-  // Boundary conditions.
+  // Boundary conditions. Dirichlet BCS
   {
     // We construct a map that stores, for each DoF corresponding to a Dirichlet
     // condition, the corresponding value. E.g., if the Dirichlet condition is
     // u_i = b, the map will contain the pair (i, b).
-    std::map<types::global_dof_index, double> boundary_values;
+    std::map<types::global_dof_index, double> boundary_values; // map ok key is global_dof_index and value is double
 
     // This object represents our boundary data as a real-valued function (that
     // always evaluates to zero).
-    Functions::ZeroFunction<dim> bc_function;
+    Functions::ZeroFunction<dim> bc_function; // this is already provided by deal.ii
 
     // Then, we build a map that, for each boundary tag, stores the
     // corresponding boundary function.
     std::map<types::boundary_id, const Function<dim> *> boundary_functions;
-    boundary_functions[0] = &bc_function;
-    boundary_functions[1] = &bc_function;
+    boundary_functions[0] = &bc_function; // boundary tag 0 is the left boundary
+    boundary_functions[1] = &bc_function; // boundary tag 1 is the right boundary
 
     // interpolate_boundary_values fills the boundary_values map.
     VectorTools::interpolate_boundary_values(dof_handler,
@@ -209,7 +209,7 @@ Poisson1D::assemble()
     // This replaces the equations for the boundary DoFs with the corresponding
     // u_i = 0 equations.
     MatrixTools::apply_boundary_values(
-      boundary_values, system_matrix, solution, system_rhs, true);
+      boundary_values, system_matrix, solution, system_rhs, true); // just flag it as true
   }
 }
 
@@ -220,7 +220,7 @@ Poisson1D::solve()
 
   // Here we specify the maximum number of iterations of the iterative solver,
   // and its tolerance.
-  SolverControl solver_control(1000, 1e-6 * system_rhs.l2_norm());
+  SolverControl solver_control(1000, 1e-6 * system_rhs.l2_norm()); // stopping criteria
 
   // Since the system matrix is symmetric and positive definite, we solve the
   // system using the conjugate gradient method.
@@ -229,7 +229,7 @@ Poisson1D::solve()
   std::cout << "  Solving the linear system" << std::endl;
   // We don't use any preconditioner for now, so we pass the identity matrix as
   // preconditioner.
-  solver.solve(system_matrix, solution, system_rhs, PreconditionIdentity());
+  solver.solve(system_matrix, solution, system_rhs, PreconditionIdentity()); // No preconditioner
   std::cout << "  " << solver_control.last_step() << " CG iterations"
             << std::endl;
 }

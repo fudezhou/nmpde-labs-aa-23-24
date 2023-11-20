@@ -1,7 +1,7 @@
 #include "Poisson1D.hpp"
 
 void
-Poisson1D::setup()
+Poisson1D::setup() 
 {
   std::cout << "===============================================" << std::endl;
 
@@ -259,4 +259,23 @@ Poisson1D::output() const
   std::cout << "Output written to " << output_file_name << std::endl;
 
   std::cout << "===============================================" << std::endl;
+}
+
+double 
+Poisson1D::compute_error(const VectorTools::NormType &norm_type) const
+{
+  const QGauss<dim> quadrature_error = QGauss<dim>(r + 2); // why r+2?
+
+  Vector<double> error_per_cell(mesh.n_active_cells()); // error per cell
+  VectorTools::integrate_difference(dof_handler,
+                                    solution,
+                                    Functions::ZeroFunction<dim>(),
+                                    error_per_cell,
+                                    quadrature_error,
+                                    norm_type);
+
+  const double error = 
+    VectorTools::compute_global_error(mesh, error_per_cell, norm_type);
+
+  return error;
 }

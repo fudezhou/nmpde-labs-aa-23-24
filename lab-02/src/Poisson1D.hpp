@@ -1,5 +1,5 @@
 #ifndef POISSON_1D_HPP
-#define POISSON_1D_HPP
+#define POISSON_1D_HPP 
 
 #include <deal.II/base/quadrature_lib.h>
 
@@ -68,12 +68,38 @@ public:
     virtual double
     value(const Point<dim> &p, const unsigned int /*component*/ = 0) const
     {
-      if (p[0] <= 1.0 / 8 || p[0] > 1.0 / 4.0)
-        return 0.0;
-      else
-        return -1.0;
+      // if (p[0] <= 1.0 / 8 || p[0] > 1.0 / 4.0)
+      //   return 0.0;
+      // else
+      //   return -1.0;
+
+      return 4.0 * M_1_PI * M_1_PI * std::sin(2.0 * M_PI * p[0]);
     }
   };
+
+  class ExactSolution : public Function<dim>
+  {
+  public:
+    // Constructor.
+    ExactSolution()
+    {}
+
+    // Evaluation.
+    virtual double
+    value(const Point<dim> &p, const unsigned int /*component*/ = 0) const
+    {
+      return std::sin(2.0 * M_PI * p[0]);
+    }
+
+    virtual Tensor<1, dim>
+    gradient(const Point<dim> &p, const unsigned int /*component*/ = 0) const
+    {
+      Tensor<1, dim> return_value;
+      return_value[0] = 2.0 * M_PI * std::cos(2.0 * M_PI * p[0]);
+      return return_value;
+    }
+  };
+  }
 
   // Constructor.
   Poisson1D(const unsigned int &N_, const unsigned int &r_)
@@ -96,6 +122,10 @@ public:
   // Output.
   void
   output() const;
+
+  // Compute the error
+  double 
+  compute_error(const Vector<double> &solution) const;
 
 protected:
   // N+1 is the number of elements.

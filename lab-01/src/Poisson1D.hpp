@@ -41,14 +41,14 @@ public:
   // In deal.ii, functions are implemented by deriving the dealii::Function
   // class, which provides an interface for the computation of function values
   // and their derivatives.
-  class DiffusionCoefficient : public Function<dim>
+  class DiffusionCoefficient : public Function<dim> // inherit from Function<dim>
   {
   public:
-    // Constructor.
-    DiffusionCoefficient()
+    // Constructor. Using the default constructor.
+    DiffusionCoefficient() 
     {}
 
-    // Evaluation.
+    // Evaluation. This is suited for the problem at hand.
     virtual double
     value(const Point<dim> & /*p*/, const unsigned int /*component*/ = 0) const
     {
@@ -60,11 +60,11 @@ public:
   class ForcingTerm : public Function<dim>
   {
   public:
-    // Constructor.
-    ForcingTerm()
+    // Constructor. Default constructor.
+    ForcingTerm() 
     {}
 
-    // Evaluation.
+    // Evaluation. This is suited for the problem at hand.
     virtual double
     value(const Point<dim> &p, const unsigned int /*component*/ = 0) const
     {
