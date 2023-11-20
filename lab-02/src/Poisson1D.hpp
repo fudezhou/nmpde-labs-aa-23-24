@@ -50,7 +50,7 @@ public:
 
     // Evaluation.
     virtual double
-    value(const Point<dim> & /*p*/, const unsigned int /*component*/ = 0) const
+    value(const Point<dim> &p, const unsigned int /*component*/ = 0) const
     {
       return 1.0;
     }
@@ -68,6 +68,7 @@ public:
     virtual double
     value(const Point<dim> &p, const unsigned int /*component*/ = 0) const
     {
+<<<<<<< HEAD
       // if (p[0] <= 1.0 / 8 || p[0] > 1.0 / 4.0)
       //   return 0.0;
       // else
@@ -77,6 +78,20 @@ public:
     }
   };
 
+=======
+      // Points 3 and 4.
+      return 4.0 * M_PI * M_PI * std::sin(2.0 * M_PI * p[0]);
+
+      // Point 5.
+      // if (p[0] < 0.5)
+      //   return 0.0;
+      // else
+      //   return -std::sqrt(p[0] - 0.5);
+    }
+  };
+
+  // Exact solution.
+>>>>>>> 75d41876821896addaf8378a6695d13b18b6d48d
   class ExactSolution : public Function<dim>
   {
   public:
@@ -88,6 +103,7 @@ public:
     virtual double
     value(const Point<dim> &p, const unsigned int /*component*/ = 0) const
     {
+<<<<<<< HEAD
       return std::sin(2.0 * M_PI * p[0]);
     }
 
@@ -100,6 +116,42 @@ public:
     }
   };
   }
+=======
+      // Points 3 and 4.
+      return std::sin(2.0 * M_PI * p[0]);
+
+      // Point 5.
+      // if (p[0] < 0.5)
+      //   return A * p[0];
+      // else
+      //   return A * p[0] + 4.0 / 15.0 * std::pow(p[0] - 0.5, 2.5);
+    }
+
+    // Gradient evaluation.
+    // deal.II requires this method to return a Tensor (not a double), i.e. a
+    // dim-dimensional vector. In our case, dim = 1, so that the Tensor will in
+    // practice contain a single number. Nonetheless, we need to return an
+    // object of type Tensor.
+    virtual Tensor<1, dim>
+    gradient(const Point<dim> &p, const unsigned int /*component*/ = 0) const
+    {
+      Tensor<1, dim> result;
+
+      // Points 3 and 4.
+      result[0] = 2.0 * M_PI * std::cos(2.0 * M_PI * p[0]);
+
+      // Point 5.
+      // if (p[0] < 0.5)
+      //   result[0] = A;
+      // else
+      //   result[0] = A + 2.0 / 3.0 * std::pow(p[0] - 0.5, 1.5);
+
+      return result;
+    }
+
+    static constexpr double A = -4.0 / 15.0 * std::pow(0.5, 2.5);
+  };
+>>>>>>> 75d41876821896addaf8378a6695d13b18b6d48d
 
   // Constructor.
   Poisson1D(const unsigned int &N_, const unsigned int &r_)
@@ -123,9 +175,15 @@ public:
   void
   output() const;
 
+<<<<<<< HEAD
   // Compute the error
   double 
   compute_error(const Vector<double> &solution) const;
+=======
+  // Compute the error.
+  double
+  compute_error(const VectorTools::NormType &norm_type) const;
+>>>>>>> 75d41876821896addaf8378a6695d13b18b6d48d
 
 protected:
   // N+1 is the number of elements.
